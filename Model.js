@@ -68,6 +68,36 @@ function teamId(abbr) {
   return t ? t.id : 0
 }
 
+function teamPickerOptions() {
+  var abbrs = teamAbbrs()
+  var out = []
+  for (var i = 0; i < abbrs.length; i++) {
+    var a = abbrs[i]
+    out.push({ value: a, label: a + "  " + TEAMS[a].name })
+  }
+  return out
+}
+
+function teamFromShellConfig(raw, pluginId) {
+  var id = String(pluginId || "")
+  try {
+    var cfg = JSON.parse(String(raw || ""))
+  } catch (e) {
+    return ""
+  }
+  if (!cfg || !cfg.bar || !cfg.bar.layout) return ""
+  var sections = ["left", "center", "right"]
+  for (var s = 0; s < sections.length; s++) {
+    var arr = cfg.bar.layout[sections[s]]
+    if (!arr) continue
+    for (var i = 0; i < arr.length; i++) {
+      var e = arr[i]
+      if (e && e.id === id && e.team) return String(e.team).toUpperCase()
+    }
+  }
+  return ""
+}
+
 // Sanitize every string that comes from the network before it reaches a QML
 // Text. Strips: angle brackets (a first-party bar label renders as Qt
 // AutoText, which promotes an HTML-looking string to StyledText — an
@@ -122,6 +152,7 @@ function parseSchedule(raw, myTeamId) {
       else state = "pre"
       var home = sideInfo(g.teams && g.teams.home)
       var away = sideInfo(g.teams && g.teams.away)
+      if (myTeamId > 0 && home.id !== myTeamId && away.id !== myTeamId) continue
       out.push({
         gamePk: num(g.gamePk),
         startMs: startMs,
@@ -566,6 +597,8 @@ if (typeof module !== "undefined") {
     clubHue: clubHue,
     teamAbbrs: teamAbbrs,
     teamId: teamId,
+    teamPickerOptions: teamPickerOptions,
+    teamFromShellConfig: teamFromShellConfig,
     clean: clean,
     parseSchedule: parseSchedule,
     currentOrNext: currentOrNext,

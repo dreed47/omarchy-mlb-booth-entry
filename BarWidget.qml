@@ -11,10 +11,10 @@ BarWidget {
   function injectPanel() {
     var target = panelLoader.item
     if (!target) return
-    if ("bar" in target) target.bar = root.bar
-    if ("settings" in target) target.settings = root.settings
-    if ("anchorItem" in target) target.anchorItem = button
-    if ("hostWidget" in target) target.hostWidget = root
+    target.bar = Qt.binding(function() { return root.bar })
+    target.settings = Qt.binding(function() { return root.settings })
+    target.anchorItem = Qt.binding(function() { return button })
+    target.hostWidget = Qt.binding(function() { return root })
   }
 
   function refresh() {

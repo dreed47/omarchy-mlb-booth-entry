@@ -18,16 +18,24 @@ Panel {
   ipcTarget: "io.github.jeremylongshore.mlb-booth"
   manageIpc: false
 
-  property var anchorItem: null
+  property Item anchorItem: null
 
   // The bar identifies this plugin by the widget mounted in its slot, not by
   // this nested panel.
   property var hostWidget: null
+  property string preferredTeam: ""
+  property string pinnedTeam: ""
   readonly property var barIdentity: hostWidget || root
 
-  // ---- Settings. Team is the one real choice; the AI trio is optional and
-  //      off until all three are filled.
-  readonly property string teamAbbr: String(setting("team", "ATL")).toUpperCase()
+  readonly property string teamAbbr: {
+    var t = pinnedTeam
+      || preferredTeam
+      || (settings && settings.team)
+      || (hostWidget && hostWidget.settings && hostWidget.settings.team)
+      || "PIT"
+    t = String(t).toUpperCase()
+    return Model.teamId(t) ? t : "PIT"
+  }
   readonly property int myTeamId: Model.teamId(teamAbbr)
   readonly property string aiBaseUrl: String(setting("aiBaseUrl", ""))
   readonly property string aiModel: String(setting("aiModel", ""))
@@ -73,6 +81,22 @@ Panel {
     if (root.bar && typeof root.bar.switchPanelFrom === "function")
       return root.bar.switchPanelFrom(root.barIdentity, direction)
     return false
+  }
+
+  function saveTeam(abbr) {
+    var t = String(abbr || "").toUpperCase()
+    if (!Model.teamId(t)) return
+    pinnedTeam = t
+    var host = hostWidget
+    var src = (host && host.settings) || settings || {}
+    var entry = { id: root.moduleName }
+    for (var k in src) if (k !== "id") entry[k] = src[k]
+    entry.team = t
+    settings = entry
+    if (host) host.settings = entry
+    var barObj = root.bar || (host && host.bar)
+    if (barObj && barObj.shell && typeof barObj.shell.updateEntryInline === "function")
+      barObj.shell.updateEntryInline(root.moduleName, entry)
   }
 
   // ---- Data state. Raw responses parse into these; last-good values stay
@@ -134,10 +158,14 @@ Panel {
     recapText = ""
     recapShownKey = ""
     recapPendingKey = ""
-    refresh()
+    if (myTeamId > 0) refresh()
   }
 
+  property int scheduleTeamId: 0
+
   function refresh() {
+    if (!(myTeamId > 0)) return
+    scheduleTeamId = myTeamId
     var d0 = new Date(nowMs - 86400000).toISOString().slice(0, 10)
     var d1 = new Date(nowMs + 7 * 86400000).toISOString().slice(0, 10)
     scheduleProc.command = curl("https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId="
@@ -223,6 +251,7 @@ Panel {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        if (root.myTeamId !== root.scheduleTeamId) return
         var parsed = Model.parseSchedule(text, root.myTeamId)
         if (parsed.length) {
           root.games = parsed
@@ -335,11 +364,11 @@ Panel {
   // ---- Popup UI.
   KeyboardPanel {
     id: panel
-    anchorItem: root.anchorItem
+    anchorItem: root.anchorItem ? root.anchorItem : root.hostWidget
     owner: root.barIdentity
     bar: root.bar
     open: root.opened
-    centerOnBar: true
+    centerOnBar: false
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(420))
     contentHeight: panel.fittedContentHeight(contentColumn.implicitHeight)
@@ -347,6 +376,7 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
+      blocked: teamPick.popupOpen
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
@@ -362,6 +392,26 @@ Panel {
           id: contentColumn
           width: parent.width
           spacing: Style.space(12)
+
+          Item {
+            width: parent.width
+            height: teamPick.implicitHeight
+
+            Dropdown {
+              id: teamPick
+              anchors.right: parent.right
+              anchors.rightMargin: Style.space(16)
+              anchors.verticalCenter: parent.verticalCenter
+              width: Style.space(200)
+              showLabel: false
+              value: root.teamAbbr
+              options: Model.teamPickerOptions()
+              foreground: root.bar ? root.bar.foreground : Color.foreground
+              background: Color.popups.background
+              fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+              onChanged: function(value) { root.saveTeam(value) }
+            }
+          }
 
           // ---- Hero: matchup, live badge or countdown or final.
           Item {
