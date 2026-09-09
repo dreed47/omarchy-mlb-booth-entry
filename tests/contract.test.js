@@ -35,7 +35,11 @@ test("render tooling requires exact 1280x720 provenance and approval", () => {
   assert.match(render, /export PATH=.*e2e\/bin/)
   assert.match(render, /rawShellLogSha256/)
   assert.match(render, /visualInspection:\{status:"pending"/)
+  assert.match(render, /rig-after-open\.sh/)
   assert.match(read("scripts/approve-preview.sh"), /product value is visible without reading the README/)
+  const afterOpen = read("e2e/rig-after-open.sh")
+  assert.match(afterOpen, /ipc call "\$MOD" settings/)
+  assert.ok(fs.statSync(path.join(root, "e2e/rig-after-open.sh")).mode & 0o111, "rig-after-open.sh must be executable")
 })
 
 test("render fixture tells the complete live baseball story without network access", () => {

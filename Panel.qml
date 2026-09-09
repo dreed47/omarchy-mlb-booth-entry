@@ -396,8 +396,26 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
-      onCloseRequested: root.close()
-      onTabRequested: function(direction) { root.switchPanel(direction) }
+      onCloseRequested: {
+        if (root.editingSettings) root.editingSettings = false
+        else root.close()
+      }
+      onTabRequested: function(direction) {
+        if (root.editingSettings) settingsForm.move(direction, 0)
+        else root.switchPanel(direction)
+      }
+      onMoveRequested: function(dx, dy) {
+        if (root.editingSettings) settingsForm.move(dx, dy)
+      }
+      onActivateRequested: {
+        if (root.editingSettings) settingsForm.activate()
+      }
+      onTextKey: function(t) {
+        if (t === "s" || t === "S") {
+          if (root.editingSettings) root.editingSettings = false
+          else root.openSettings()
+        }
+      }
 
       Flickable {
         anchors.fill: parent
@@ -443,11 +461,20 @@ Panel {
               color: gearArea.containsMouse
                 ? (root.bar ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "#333")
                 : "transparent"
+              activeFocusOnTab: true
+
+              Accessible.role: Accessible.Button
+              Accessible.name: root.editingSettings ? "Close settings" : "Open settings"
+              Accessible.focusable: true
+              Accessible.onPressAction: root.editingSettings = !root.editingSettings
 
               Text {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
                 text: root.editingSettings ? String.fromCharCode(0x00d7) : String.fromCharCode(0xf013)
                 textFormat: Text.PlainText
+                elide: Text.ElideRight
                 color: root.bar ? Qt.darker(root.bar.foreground, 1.3) : Color.muted
                 font.family: root.bar ? root.bar.fontFamily : Style.font.family
                 font.pixelSize: root.editingSettings ? Style.font.title : Style.font.body
@@ -464,6 +491,7 @@ Panel {
           }
 
           SettingsForm {
+            id: settingsForm
             visible: root.editingSettings
             width: parent.width
             bar: root.bar

@@ -66,11 +66,16 @@ renders game one's innings. How network input is contained is in
 
 ## Settings
 
-Click the gear in the popup, or right-click the pill, for the two choices
-a user owns:
+Click the gear in the popup, right-click the pill, or press `s` with the
+panel open, for the two choices a user owns:
 
-- **Team** — any of the 30 club abbreviations
-- **First pitch** — 12-hour or 24-hour wall clocks on the schedule and tooltip
+- **Team**: any of the 30 club abbreviations
+- **First pitch**: 12-hour or 24-hour wall clocks on the schedule and tooltip
+
+While settings are open the usual panel keys apply: `h` `j` `k` `l` or
+arrows move, Enter or Space selects, Escape goes back to the game panel.
+Save and Cancel are on the same cursor. The owner-runnable IPC is
+`omarchy-shell io.github.jeremylongshore.mlb-booth settings`.
 
 The live pill still counts down as a duration (`1h 05m`); the clock format
 only changes printed first-pitch times. Default is 24-hour, so existing
