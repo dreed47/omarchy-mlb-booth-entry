@@ -59,6 +59,17 @@ test("parseSchedule reads every game ordered by start time", () => {
   assert.deepEqual(starts, [...starts].sort((a, b) => a - b))
 })
 
+test("parseSchedule sorts a response that arrives in reverse chronological order", () => {
+  const side = (id, abbreviation) => ({ team: { id, abbreviation } })
+  const raw = JSON.stringify({ dates: [{ games: [
+    { gamePk: 2, gameDate: "2026-08-22T18:00:00Z", status: {},
+      teams: { home: side(144, "ATL"), away: side(134, "PIT") } },
+    { gamePk: 1, gameDate: "2026-08-21T18:00:00Z", status: {},
+      teams: { home: side(134, "PIT"), away: side(144, "ATL") } }
+  ] }] })
+  assert.deepEqual(Model.parseSchedule(raw, ATL).map(game => game.gamePk), [1, 2])
+})
+
 test("parseSchedule maps states and hydrated scores", () => {
   const games = Model.parseSchedule(scheduleRaw, ATL)
   const final = games.find((g) => g.gamePk === 823664)
@@ -82,6 +93,15 @@ test("isSchedulePayload accepts a dates document and rejects empty or malformed 
   assert.equal(Model.isSchedulePayload("not json"), false)
 })
 
+test("isSchedulePayload enforces the exact in-process response-size boundary", () => {
+  const prefix = '{"dates":[],"pad":"'
+  const suffix = '"}'
+  const exact = prefix + "x".repeat(4_000_000 - prefix.length - suffix.length) + suffix
+  assert.equal(exact.length, 4_000_000)
+  assert.equal(Model.isSchedulePayload(exact), true)
+  assert.equal(Model.isSchedulePayload(exact + " "), false)
+})
+
 test("scheduleBelongsToTeam rejects another club's stale payload", () => {
   const pit = Model.teamId("PIT")
   const atl = Model.teamId("ATL")
@@ -90,6 +110,18 @@ test("scheduleBelongsToTeam rejects another club's stale payload", () => {
   assert.equal(Model.scheduleBelongsToTeam(games, pit), false)
   assert.equal(Model.scheduleBelongsToTeam([], pit), true)
   assert.equal(Model.scheduleBelongsToTeam(null, pit), false)
+})
+
+test("scheduleBelongsToTeam checks each venue and rejects empty identities", () => {
+  const pit = Model.teamId("PIT")
+  const atl = Model.teamId("ATL")
+  const home = { home: { id: atl }, away: { id: pit } }
+  const away = { home: { id: pit }, away: { id: atl } }
+  const neither = { home: { id: pit }, away: { id: pit } }
+  assert.equal(Model.scheduleBelongsToTeam([home], atl), true)
+  assert.equal(Model.scheduleBelongsToTeam([away], atl), true)
+  assert.equal(Model.scheduleBelongsToTeam([neither], atl), false)
+  assert.equal(Model.scheduleBelongsToTeam([home], 0), false)
 })
 
 test("parseSchedule returns [] on malformed input, keeping last-good state", () => {
