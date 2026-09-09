@@ -58,7 +58,10 @@ test("render fixture tells the complete live baseball story without network acce
   assert.equal(gumbo.liveData.linescore.currentInning, 7)
   assert.equal(gumbo.liveData.plays.currentPlay.count.strikes, 2)
   assert.match(gumbo.liveData.plays.allPlays[0].result.description, /scoring/)
-  assert.match(read("e2e/rig-before-capture.sh"), /schedule standings gumbo/)
+  const captureGuard = read("e2e/rig-before-capture.sh")
+  assert.match(captureGuard, /schedule standings gumbo/)
+  assert.match(captureGuard, /while \[ "\$attempt" -lt 12 \]/)
+  assert.match(captureGuard, /exit 1/)
 
   assert.throws(() => run("https://example.com/not-the-mlb-api"), /Command failed/)
 })
