@@ -78,6 +78,11 @@ test("tracked source contains no unresolved merge-conflict markers", () => {
   }
 })
 
+test("a live schedule response starts the first GUMBO fetch immediately", () => {
+  const panel = read("Panel.qml")
+  assert.match(panel, /root\.games = parsed[\s\S]*root\.scheduleLoaded = true[\s\S]*root\.liveTick\(\)/)
+})
+
 test("CI pins actions and runs every local quality gate", () => {
   const workflow = read(".github/workflows/test.yml")
   assert.doesNotMatch(workflow, /uses:\s+[^\s]+@v\d+/)

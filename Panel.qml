@@ -276,6 +276,10 @@ Panel {
         if (!Model.scheduleBelongsToTeam(parsed, requested)) return
         root.games = parsed
         root.scheduleLoaded = true
+        // A TriggeredOnStart timer does not reliably fire when its `running`
+        // binding flips after an asynchronous schedule response. Fetch the
+        // first live feed now; the timer owns every later poll.
+        root.liveTick()
         if (parsed.length) root.maybeRecap()
       }
     }
