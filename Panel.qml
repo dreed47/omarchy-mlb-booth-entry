@@ -279,7 +279,7 @@ Panel {
         // A TriggeredOnStart timer does not reliably fire when its `running`
         // binding flips after an asynchronous schedule response. Fetch the
         // first live feed now; the timer owns every later poll.
-        root.liveTick()
+        Qt.callLater(root.liveTick)
         if (parsed.length) root.maybeRecap()
       }
     }
