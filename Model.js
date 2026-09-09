@@ -170,7 +170,7 @@ function isSchedulePayload(raw) {
   if (!s.length || s.length > MAX_BODY_CHARS) return false
   var data
   try { data = JSON.parse(s) } catch (e) { return false }
-  return !!(data && data.dates)
+  return !!(data && Array.isArray(data.dates))
 }
 
 function scheduleBelongsToTeam(games, teamId) {

@@ -77,6 +77,8 @@ test("isSchedulePayload accepts a dates document and rejects empty or malformed 
   assert.equal(Model.isSchedulePayload('{"dates":[]}'), true)
   assert.equal(Model.isSchedulePayload(""), false)
   assert.equal(Model.isSchedulePayload("{}"), false)
+  assert.equal(Model.isSchedulePayload('{"dates":{}}'), false)
+  assert.equal(Model.isSchedulePayload('{"dates":"not an array"}'), false)
   assert.equal(Model.isSchedulePayload("not json"), false)
 })
 
