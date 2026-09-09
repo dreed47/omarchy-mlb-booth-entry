@@ -39,6 +39,8 @@ test("render tooling requires exact 1280x720 provenance and approval", () => {
   assert.match(read("scripts/approve-preview.sh"), /product value is visible without reading the README/)
   const afterOpen = read("e2e/rig-after-open.sh")
   assert.match(afterOpen, /ipc call "\$MOD" settings/)
+  assert.match(afterOpen, /schedule standings gumbo/)
+  assert.match(afterOpen, /while \[ "\$attempt" -lt 12 \]/)
   assert.ok(fs.statSync(path.join(root, "e2e/rig-after-open.sh")).mode & 0o111, "rig-after-open.sh must be executable")
 })
 
@@ -59,7 +61,7 @@ test("render fixture tells the complete live baseball story without network acce
   assert.equal(gumbo.liveData.plays.currentPlay.count.strikes, 2)
   assert.match(gumbo.liveData.plays.allPlays[0].result.description, /scoring/)
   const captureGuard = read("e2e/rig-before-capture.sh")
-  assert.match(captureGuard, /schedule standings gumbo/)
+  assert.match(captureGuard, /schedule standings/)
   assert.match(captureGuard, /while \[ "\$attempt" -lt 12 \]/)
   assert.match(captureGuard, /exit 1/)
 
